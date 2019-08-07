@@ -1,0 +1,561 @@
+{-# STDLIB_VERSION 3 #-}
+{-# CONTENT_TYPE DAPP #-}
+{-# SCRIPT_TYPE ACCOUNT #-}
+ 
+let NONE = "none"
+func getNumberByKey(key: String) = {
+    let num = match getInteger(this, key) {
+            case a:Int => a
+            case _ => 0
+    }
+    num
+}
+func getStrByKey(key: String) = {
+    let str = match getString(this, key) {
+            case a:String => a
+            case _ => NONE
+    }
+    str
+}
+func getKeyWhitelistRef(account: String) = {
+    "wl_ref_" + account
+}
+func getKeyWhitelistStatus(account: String) = {
+    "wl_sts_" + account
+}
+func getKeyBalance(account: String) = {
+    "balance_" + account
+}
+func getKeyWhitelistBio(account: String) = {
+    "wl_bio_" + account
+}
+func getKeyWhitelistBlock(account: String) = {
+    "wl_blk_" + account
+}
+func getKeyItemAuthor(item: String) = {
+    "author_" + item
+}
+func getKeyItemBlock(item: String) = {
+    "block_" + item
+}
+func getKeyItemVotingExpiration(item: String) = {
+    "expiration_block_" + item
+}
+func getKeyItemBank(item: String) = {
+    "bank_" + item
+}
+func getKeyItemStatus(item: String) = {
+    "status_" + item
+}
+func getKeyItemData(item: String) = {
+    "datajson_" + item
+}
+func getKeyContestData(item: String) = {
+    "contest_datajson_" + item
+}
+func getKeyItemCrowdExpiration(item: String) = {
+    "expiration_one_" + item
+}
+func getKeyItemWhaleExpiration(item: String) = {
+    "expiration_two_" + item
+}
+func getKeyItemNCommits(item: String) = {
+    "ncommits_" + item
+}
+func getKeyItemAccCommit(item: String, account: String) = {
+    "commit_" + item + "_" + account
+}
+func getKeyItemAccReveal(item: String, account: String) = {
+    "reveal_" + item + "_" + account
+}
+func getKeyItemVotesYes(item: String) = {
+    "cnt_yes_" + item
+}
+func getKeyItemVotesNo(item: String) = {
+    "cnt_no_" + item
+}
+func getKeyItemAccFinal(item: String, account: String) = {
+    "final_" + item + "_" + account
+}
+func getKeyItemFundPositive(item: String) = {
+    "positive_fund_" + item
+}
+func getKeyItemFundNegative(item: String) = {
+    "negative_fund_" + item
+}
+func getKeyItemAccFundPositive(item: String, account: String) = {
+    getKeyItemFundPositive(item) + "_" + account
+}
+func getKeyItemAccFundNegative(item: String, account: String) = {
+    getKeyItemFundNegative(item) + "_" + account
+}
+func getKeyItemAccReviewsCnt(item: String, account: String) = {
+    "reviews_cnt_" + item + "_" + account
+}
+func getKeyItemAccReview(item: String, account: String) = {
+    "review_" + item + "_" + account
+}
+func getKeyItemAccReviewText(item: String, account: String, cnt: String) = {
+    getKeyItemAccReview(item, account) + "_text_id:" + cnt
+}
+func getKeyItemAccReviewMode(item: String, account: String, cnt: String) = {
+    getKeyItemAccReview(item, account) + "_mode_id:" + cnt
+}
+func getKeyItemAccReviewTier(item: String, account: String, cnt: String) = {
+    getKeyItemAccReview(item, account) + "_tier_id:" + cnt
+}
+func getKeyItemAccVoteReviewText(item: String, account: String) = {
+    getKeyItemAccReview(item, account) + "_votereview"
+}
+func getKeyItemAccWhaleReviewText(item: String, account: String) = {
+    getKeyItemAccReview(item, account) + "_whalereview"
+}
+func getKeyItemBuyoutAmount(item: String) = {
+    "buyout_amount_" + item
+}
+func getKeyItemAccWinnings(item: String, account: String) = {
+    "winnings_" + item + "_" + account
+}
+ 
+func getValueWhitelistRef(account: String) = {
+    getStrByKey(getKeyWhitelistRef(account))
+}
+func getValueWhitelistStatus(account: String) = {
+    getStrByKey(getKeyWhitelistStatus(account))
+}
+func getValueBalance(account: String) = {
+    getNumberByKey(getKeyBalance(account))
+}
+func getValueWhitelistBio(account: String) = {
+    getStrByKey(getKeyWhitelistBio(account))
+}
+func getValueWhitelistBlock(account: String) = {
+    getStrByKey(getKeyWhitelistBlock(account))
+}
+func getValueItemAuthor(item: String) = {
+    getStrByKey(getKeyItemAuthor(item))
+}
+func getValueItemBlock(item: String) = {
+    getNumberByKey(getKeyItemBlock(item))
+}
+func getValueItemVotingExpiration(item: String) = {
+    getNumberByKey(getKeyItemVotingExpiration(item))
+}
+func getValueItemBank(item: String) = {
+    getNumberByKey(getKeyItemBank(item))
+}
+func getValueItemStatus(item: String) = {
+    getStrByKey(getKeyItemStatus(item))
+}
+func getValueItemData(item: String) = {
+    getStrByKey(getKeyItemData(item))
+}
+func getValueItemCrowdExpiration(item: String) = {
+    getNumberByKey(getKeyItemCrowdExpiration(item))
+}
+func getValueItemWhaleExpiration(item: String) = {
+    getNumberByKey(getKeyItemWhaleExpiration(item))
+}
+func getValueItemNCommits(item: String) = {
+    getNumberByKey(getKeyItemNCommits(item))
+}
+func getValueItemAccCommit(item: String, account: String) = {
+    getStrByKey(getKeyItemAccCommit(item, account))
+}
+func getValueItemAccReveal(item: String, account: String) = {
+    getStrByKey(getKeyItemAccReveal(item, account))
+}
+func getValueItemVotesYes(item: String) = {
+    getNumberByKey(getKeyItemVotesYes(item))
+}
+func getValueItemVotesNo(item: String) = {
+    getNumberByKey(getKeyItemVotesNo(item))
+}
+func getValueItemAccFinal(item: String, account: String) = {
+    getStrByKey(getKeyItemAccFinal(item, account))
+}
+func getValueItemFundPositive(item: String) = {
+    getNumberByKey(getKeyItemFundPositive(item))
+}
+func getValueItemFundNegative(item: String) = {
+    getNumberByKey(getKeyItemFundNegative(item))
+}
+func getValueItemAccFundPositive(item: String, account: String) = {
+    getNumberByKey(getKeyItemAccFundPositive(item, account))
+}
+func getValueItemAccFundNegative(item: String, account: String) = {
+    getNumberByKey(getKeyItemAccFundNegative(item, account))
+}
+func getValueItemAccReviewsCnt(item: String, account: String) = {
+    getNumberByKey(getKeyItemAccReviewsCnt(item, account))
+}
+func getValueItemAccReviewText(item: String, account: String, cnt: String) = {
+    getStrByKey(getKeyItemAccReviewText(item, account, cnt))
+}
+func getValueItemAccReviewMode(item: String, account: String, cnt: String) = {
+    getStrByKey(getKeyItemAccReviewMode(item, account, cnt))
+}
+func getValueItemAccReviewTier(item: String, account: String, cnt: String) = {
+    getNumberByKey(getKeyItemAccReviewTier(item, account, cnt))
+}
+func getValueItemBuyoutAmount(item: String) = {
+    getNumberByKey(getKeyItemBuyoutAmount(item))
+}
+func getValueItemAccWinnings(item: String, account: String) = {
+    getNumberByKey(getKeyItemAccWinnings(item, account))
+}
+ 
+let WHITELISTED = "registered"
+let INVITED = "invited"
+let WHALE = "whale"
+let SPENDINVITE = "spend_invite"
+
+let NEW = "new"
+let COMMIT = "voting_commit"
+let REVEAL = "voting_reveal"
+let FEATURED = "featured"
+let DELISTED = "delisted"
+let CASHOUT = "cashout"
+let BUYOUT = "buyout"
+let FINISHED = "finished"
+let CLAIMED = "claimed"
+ 
+let POSITIVE = "positive"
+let NEGATIVE = "negative"
+ 
+let GENESIS = "3P8Fvy1yDwNHvVrabe4ek5b9dAwxFjDKV7R"
+let ADMIN = "3MwMR1ZFfy712trHVLisizYmvRQwsg8z9Bn"
+ 
+# (GLOBALS) TCR implementation with commit-reveal scheme
+let VOTERS = 3
+let QUORUM = 2
+let TIERS = [3*100000000, 10*100000000, 100*100000000, 300*100000000, 1000*100000000]
+let LISTINGFEE = 3*100000000
+let VOTEBET = 1*100000000
+ 
+let MULTIPLIER = 150
+ 
+@Callable(i)
+func inviteuser(newaccount: String, data: String) = {
+    let account = toBase58String(i.caller.bytes)
+    let newstatus = getValueWhitelistStatus(newaccount)
+    let currstatus = getValueWhitelistStatus(account)
+    if (newstatus == WHITELISTED || newstatus == WHALE)
+        then throw("User has already been registered")
+    else if (currstatus != WHITELISTED && account != GENESIS && currstatus != WHALE)
+        then throw("Your account should be whitelisted. status: " + currstatus)
+    else {
+        WriteSet([
+            DataEntry(getKeyWhitelistRef(newaccount), account),
+            DataEntry(getKeyWhitelistBio(newaccount), data),
+            DataEntry(getKeyWhitelistStatus(newaccount), INVITED)
+        ])
+    }
+}
+@Callable(i)
+func signupbylink(hash: String, data: String, type: String) = {
+    let account = toBase58String(i.caller.bytes)
+    let status = getValueWhitelistStatus(hash)
+    if (status != INVITED)
+        then throw("Referral invite needed. Current status: " + status + ", key:" + getKeyWhitelistStatus(hash) + ", account:" + hash)
+    else {
+        WriteSet([
+            DataEntry(getKeyWhitelistBio(account), data),
+            DataEntry(getKeyWhitelistBlock(account), height),
+            DataEntry(getKeyWhitelistStatus(account), if (type == WHALE) then WHALE else WHITELISTED),
+            DataEntry(getKeyWhitelistStatus(hash), SPENDINVITE),
+            DataEntry(getKeyWhitelistRef(account), getValueWhitelistRef(hash))
+        ])
+    }
+}
+@Callable(i)
+func signup(data: String, type: String) = {
+    let account = toBase58String(i.caller.bytes)
+    let status = getValueWhitelistStatus(account)
+    if (status == NONE)
+        then throw("Referral invite needed. Current status: " + status + ", key:" + getKeyWhitelistStatus(account) + ", account:" + account)
+    else {
+        WriteSet([
+            DataEntry(getKeyWhitelistBio(account), data),
+            DataEntry(getKeyWhitelistBlock(account), height),
+            DataEntry(getKeyWhitelistStatus(account), if (type == WHALE) then WHALE else WHITELISTED)
+        ])
+    }
+}
+@Callable(i)
+func userupdate(data: String, type: String) = {
+    let account = toBase58String(i.caller.bytes)
+    WriteSet([
+        DataEntry(getKeyWhitelistBio(account), data),
+        DataEntry(getKeyWhitelistStatus(account), if (type == WHALE) then WHALE else WHITELISTED)
+    ])
+}
+@Callable(i)
+func projupdate(item: String, data: String) = {
+    let account = toBase58String(i.caller.bytes)
+    if (getValueItemAuthor(item) != account) then throw("You're not author")
+    else {
+        WriteSet([DataEntry(getKeyItemData(item), data)])
+    }
+}
+ 
+@Callable(i)
+func contestAddOrUpdate(item: String, data: String) = {
+    let account = toBase58String(i.caller.bytes)
+    if ( account != ADMIN ) then throw("You're not admin")
+    else {
+        WriteSet([DataEntry(getKeyContestData(item), data)])
+    }
+}
+ 
+@Callable(i)
+func withdraw() = {
+    let currentKey = toBase58String(i.caller.bytes)
+    let amount = getValueBalance(currentKey)
+    if (amount <= 0) then throw("Not enough balance")
+    else ScriptResult(
+        WriteSet([ DataEntry(getKeyBalance(currentKey), 0)]),
+        TransferSet([ScriptTransfer(i.caller, amount, unit)])
+    )
+}
+@Callable(i)
+func additem(item: String, expVoting: Int, expCrowd: Int, expWhale: Int, data: String) = {
+    let account = toBase58String(i.caller.bytes)
+    let pmt = extract(i.payment)
+    if (isDefined(pmt.assetId)) then throw("can use waves only at the moment")
+    else {
+        if (pmt.amount != LISTINGFEE)
+            then throw("Please pay exact amount for the listing: " + toString(LISTINGFEE) + ", actual payment is: " + toString(pmt.amount))
+        else if (!(expVoting > 2 && expCrowd > expVoting && expWhale > expCrowd))
+            then throw("Incorrect time parameters")
+        else if (getValueItemAuthor(item) != NONE)
+            then throw("Item already exist")
+        else WriteSet([
+            DataEntry(getKeyItemAuthor(item), account),
+            DataEntry(getKeyItemBlock(item), height),
+            DataEntry(getKeyItemVotingExpiration(item), height + expVoting),
+            DataEntry(getKeyItemBank(item), LISTINGFEE),
+            DataEntry(getKeyItemStatus(item), NEW),
+            DataEntry(getKeyItemData(item), data),
+            DataEntry(getKeyItemCrowdExpiration(item), height + expCrowd),
+            DataEntry(getKeyItemWhaleExpiration(item), height + expWhale)
+        ])
+    }
+}
+@Callable(i)
+func votecommit(item: String, hash: String) = {
+    let account = toBase58String(i.caller.bytes)
+    let commits = getValueItemNCommits(item)
+    let status = getValueItemStatus(item)
+    let pmt = extract(i.payment)
+    if (isDefined(pmt.assetId)) then throw("can use waves only at the moment")
+    else {
+        if (pmt.amount != 2*VOTEBET)
+            then throw("Not enough funds to vote for a new item")
+        else if (height > getValueItemVotingExpiration(item))
+            then throw("The voting has expired")
+        else if (getValueItemAuthor(item) == account)
+            then throw("Cannot vote for own proposal")
+        else if (status != NEW && status != COMMIT)
+            then throw("Wrong item status for 'commit' action")
+        else if (commits >= VOTERS)
+            then throw("No more voters for this item")
+        else if (getValueItemAccCommit(item, account) != NONE)
+            then throw("Can't vote twice")
+        else WriteSet([
+            DataEntry(getKeyItemStatus(item), if ( commits + 1 == VOTERS ) then REVEAL else COMMIT),
+            DataEntry(getKeyItemAccCommit(item, account), hash),
+            DataEntry(getKeyItemNCommits(item), commits + 1)
+        ])
+    }
+}
+@Callable(i)
+func votereveal(item: String, vote: String, salt: String, review: String) = {
+    let ridehash = toBase58String(sha256(toBytes(vote + salt)))
+    let account = toBase58String(i.caller.bytes)
+    let yesmltp = if(vote == FEATURED) then 1 else 0
+    let notmltp = if(vote == DELISTED) then 1 else 0
+    let yescnt = getValueItemVotesYes(item)
+    let notcnt = getValueItemVotesNo(item)
+    let newstatus = if ( yescnt >= QUORUM ) then FEATURED else
+        (if ( notcnt >= QUORUM ) then DELISTED else REVEAL)
+    if (getValueItemAccCommit(item, account) != ridehash)
+        then throw("Hashes don't match")
+    else if (height > getValueItemVotingExpiration(item))
+        then throw("The challenge has expired")
+    else if (getValueItemNCommits(item) < VOTERS)
+        then throw("It's still commit stage")
+    else if (getValueItemStatus(item) != REVEAL && getValueItemStatus(item) != newstatus)
+        then throw("Wrong item status for 'reveal' action")
+    else if (getValueItemAccReveal(item, account) != NONE)
+        then throw("Can't vote twice")
+    else if (vote != FEATURED && vote != DELISTED)
+        then throw("Bad vote result format")
+    else ScriptResult(
+        WriteSet([
+            DataEntry(getKeyItemAccReveal(item, account), vote),
+            DataEntry(getKeyItemVotesYes(item), yescnt + yesmltp),
+            DataEntry(getKeyItemVotesNo(item), notcnt + notmltp),
+            DataEntry(getKeyItemStatus(item), newstatus),
+            DataEntry(getKeyItemAccVoteReviewText(item, account), review)
+        ]),
+        TransferSet([ScriptTransfer(addressFromStringValue(account), VOTEBET, unit)])
+    )
+}
+ 
+@Callable(i)
+func finalizevoting(item: String, account: String) = {
+    let yescnt = getValueItemVotesYes(item)
+    let notcnt = getValueItemVotesNo(item)
+    let accvote = getValueItemAccReveal(item, account)
+    let isauthor = account == getValueItemAuthor(item)
+    let finalstatus = if ( yescnt > QUORUM ) then FEATURED else
+        (if ( notcnt > QUORUM ) then DELISTED else NONE)
+    let mltisnotfullmajority = if (yescnt == VOTERS || notcnt == VOTERS) then 0 else 1
+    let nwinners = if ( finalstatus == FEATURED ) then yescnt else
+        (if ( finalstatus == DELISTED ) then notcnt else 0)
+    let nloosers = VOTERS - nwinners
+    let mltacciswinner = if (finalstatus == accvote) then 1 else 0
+    let voteprofit = if (nwinners == 0) then 0 else
+        mltacciswinner*(VOTEBET +
+            mltisnotfullmajority*(nloosers*VOTEBET + LISTINGFEE)/nwinners)
+    let authorreturn = LISTINGFEE*(if(isauthor) then 1 else 0)*
+        (if (mltisnotfullmajority == 1) then 0 else 1)*(if(finalstatus == FEATURED) then 1 else 0)
+    if (height < getValueItemVotingExpiration(item))
+        then throw("The voting hasn't finished yet")
+    else if (getValueItemAccFinal(item, account) == FINISHED)
+        then throw("Account has already claimed")
+    else if (accvote == NONE && !isauthor)
+        then throw("Account hasnot voted, hasnot reveal or isnot author")
+    else if (finalstatus == NONE)
+        then throw("Voting has expired")
+    else ScriptResult(
+        WriteSet([ DataEntry(getKeyItemAccFinal(item, account), FINISHED) ]),
+        TransferSet([ScriptTransfer(addressFromStringValue(account), voteprofit + authorreturn, unit)])
+    )
+}
+ 
+@Callable(i)
+func closeexpiredvoting(item: String, account: String) = {
+    let finalstatus = if ( getValueItemVotesYes(item) > QUORUM ) then FEATURED else
+        (if ( getValueItemVotesNo(item) > QUORUM ) then DELISTED else NONE)
+    let accvote = getValueItemAccReveal(item, account)
+    let isauthor = account == getValueItemAuthor(item)
+    let acccomi = getValueItemAccCommit(item, account)
+    let hasrevealstage = getValueItemNCommits(item) == VOTERS
+    let authorreturn = LISTINGFEE*(if(isauthor) then 1 else 0)
+    let votersreturn1 = VOTEBET*(if(hasrevealstage) then 1 else 0)*
+        (if (accvote != NONE) then 1 else 0)
+    let votersreturn2 = 2*VOTEBET*(if(hasrevealstage) then 0 else 1)*
+        (if (acccomi != NONE) then 1 else 0)
+    if (height < getValueItemVotingExpiration(item))
+        then throw("The voting hasn't finished yet")
+    else if (!isauthor && acccomi == NONE)
+        then throw("Wrong account or item")
+    else if (getValueItemAccFinal(item, account) == FINISHED)
+        then throw("Account has already claimed")
+    else if (finalstatus != NONE)
+        then throw("Wrong item status")
+    else ScriptResult(
+                    WriteSet( [ DataEntry(getKeyItemAccFinal(item, account), FINISHED)] ),
+                    TransferSet([ScriptTransfer(addressFromStringValue(account), authorreturn + votersreturn1 + votersreturn2, unit)])
+                )
+}
+ 
+@Callable(i)
+func donate( item: String, tier: Int, mode: String, review: String ) = {
+    let account = toBase58String(i.caller.bytes)
+    let pmt = extract(i.payment)
+    if (isDefined(pmt.assetId)) then throw("can use waves only at the moment")
+    else {
+        let cnt = getValueItemAccReviewsCnt(item, account) + 1
+        let newnegativefund = getValueItemFundNegative(item) +
+                    ( if ( mode == NEGATIVE ) then 1 else 0) * pmt.amount
+        let newpositivefund = getValueItemFundPositive(item) +
+                    ( if ( mode == POSITIVE ) then 1 else 0) * pmt.amount
+        if (getValueItemStatus(item) != FEATURED)
+            then throw("The project hasn't accepted by community")
+        else if (height >= getValueItemCrowdExpiration(item))
+            then throw("The time for crowdfunding has expired")
+        else if (newnegativefund >= newpositivefund)
+            then throw("Negative fund can't be higher than positive fund")
+        else if (mode != POSITIVE && mode != NEGATIVE)
+            then throw("Wrong mode parameter")
+        else if (getValueItemAuthor(item) == account)
+            then throw("Can't donate own project")
+        else if (pmt.amount != TIERS[tier - 1])
+            then throw("The payment must be equal to tier amount: " + toString(TIERS[tier - 1]))
+        else WriteSet([
+            DataEntry(getKeyItemAccReviewsCnt(item, account), cnt),
+            DataEntry(getKeyItemAccFundPositive(item, account),
+                getValueItemAccFundPositive(item, account) +
+                    ( if ( mode == POSITIVE ) then 1 else 0) * pmt.amount ),
+            DataEntry(getKeyItemAccFundNegative(item, account),
+                getValueItemAccFundNegative(item, account) +
+                    ( if ( mode == NEGATIVE ) then 1 else 0) * pmt.amount ),
+            DataEntry(getKeyItemFundPositive(item), newpositivefund),
+            DataEntry(getKeyItemFundNegative(item), newnegativefund),
+            DataEntry(getKeyItemAccReviewText(item, account, toString(cnt)), review),
+            DataEntry(getKeyItemAccReviewMode(item, account, toString(cnt)), mode),
+            DataEntry(getKeyItemAccReviewTier(item, account, toString(cnt)), tier)
+        ])
+    }
+}
+ 
+@Callable(i)
+func whale( item: String, review: String ) = {
+    let account = toBase58String(i.caller.bytes)
+    let pmt = extract(i.payment)
+    if (isDefined(pmt.assetId)) then throw("can use waves only at the moment")
+    else {
+        if (getValueItemStatus(item) != FEATURED)
+            then throw("The project hasn't accepted by community")
+        else if (height < getValueItemCrowdExpiration(item))
+            then throw("The time for crowdfunding has not expired yet")
+        else if (height > getValueItemWhaleExpiration(item))
+            then throw("The time for grant has expired")
+        else if (getValueItemStatus(item) == BUYOUT)
+            then throw("Investement has already done")
+        else if (pmt.amount < (getValueItemFundPositive(item)*MULTIPLIER)/100)
+            then throw("Investement must be more than "
+            + toString(MULTIPLIER) + "% of supportes funds")
+        else WriteSet([
+            DataEntry(getKeyItemStatus(item), BUYOUT),
+            DataEntry(getKeyItemAccWhaleReviewText(item, account), review),
+            DataEntry(getKeyBalance(getValueItemAuthor(item)),
+                getValueBalance(getValueItemAuthor(item)) + getValueItemFundPositive(item)),
+            DataEntry(getKeyItemBuyoutAmount(item), pmt.amount)
+        ])
+    }
+}
+ 
+@Callable(i)
+func claimwinnings( item: String, account: String ) = {
+    let status = getValueItemStatus(item)
+    let isbayout = if (status == BUYOUT) then 1 else 0
+    let iscrowdf = if (status != BUYOUT) then 1 else 0
+    let positivefund = getValueItemFundPositive(item)
+    let negativefund = getValueItemFundNegative(item)
+    let share = isbayout*(getValueItemAccFundPositive(item, account)*100)/
+            (if (positivefund <= 0) then 1 else positivefund) +
+        iscrowdf*(getValueItemAccFundNegative(item, account)*100)/
+            (if (negativefund <= 0) then 1 else negativefund)
+    let tmpnegwin = (negativefund*MULTIPLIER)/100
+    let betprofit = isbayout*((share*negativefund)/100) +
+        iscrowdf*((share*(if (tmpnegwin < positivefund) then tmpnegwin else positivefund))/100)
+    let roiprofit = isbayout*((share*getValueItemBuyoutAmount(item))/100)
+    let authorprofit = (if (getValueItemAuthor(item) == account) then 1 else 0)*
+        positivefund*(if (status != BUYOUT) then 1 else 0)
+    if (status == DELISTED)
+        then throw("The project hasn't accepted by community")
+    else if (status != BUYOUT && height <= getValueItemWhaleExpiration(item))
+        then throw("The time for grant has not expired yet")
+    else if (positivefund + negativefund <= 0)
+        then throw("The campaign wasn't active")
+    else WriteSet([
+        DataEntry(getKeyBalance(account), getValueBalance(account) +
+            betprofit + roiprofit + authorprofit),
+        DataEntry(getKeyItemStatus(item), if (authorprofit > 0) then CASHOUT else status),
+        DataEntry(getKeyItemAccFinal(item, account), CLAIMED)
+    ])
+}
