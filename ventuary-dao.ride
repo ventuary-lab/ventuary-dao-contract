@@ -62,6 +62,9 @@ func getKeyItemWhaleExpiration(item: String) = {
 func getKeyItemNCommits(item: String) = {
     "ncommits_" + item
 }
+func getKeyItemAccReportData(item: String, account: String) = {
+    "report_" + item + "_" + account
+}
 func getKeyItemAccCommit(item: String, account: String) = {
     "commit_" + item + "_" + account
 }
@@ -210,7 +213,6 @@ let INVITED = "invited"
 let WHALE = "whale"
 let SPENDINVITE = "spend_invite"
 
-let NEW = "new"
 let COMMIT = "voting_commit"
 let REVEAL = "voting_reveal"
 let FEATURED = "featured"
@@ -335,133 +337,22 @@ func additem(item: String, expVoting: Int, expCrowd: Int, expWhale: Int, data: S
             DataEntry(getKeyItemBlock(item), height),
             DataEntry(getKeyItemVotingExpiration(item), height + expVoting),
             DataEntry(getKeyItemBank(item), LISTINGFEE),
-            DataEntry(getKeyItemStatus(item), NEW),
+            DataEntry(getKeyItemStatus(item), FEATURED),
             DataEntry(getKeyItemData(item), data),
             DataEntry(getKeyItemCrowdExpiration(item), height + expCrowd),
             DataEntry(getKeyItemWhaleExpiration(item), height + expWhale)
         ])
     }
 }
+
 @Callable(i)
-func votecommit(item: String, hash: String) = {
+func reportProject(item: String, data: String) = {
     let account = toBase58String(i.caller.bytes)
-    let commits = getValueItemNCommits(item)
-    let status = getValueItemStatus(item)
-    let pmt = extract(i.payment)
-    if (isDefined(pmt.assetId)) then throw("can use waves only at the moment")
-    else {
-        if (pmt.amount != 2*VOTEBET)
-            then throw("Not enough funds to vote for a new item")
-        else if (height > getValueItemVotingExpiration(item))
-            then throw("The voting has expired")
-        else if (getValueItemAuthor(item) == account)
-            then throw("Cannot vote for own proposal")
-        else if (status != NEW && status != COMMIT)
-            then throw("Wrong item status for 'commit' action")
-        else if (commits >= VOTERS)
-            then throw("No more voters for this item")
-        else if (getValueItemAccCommit(item, account) != NONE)
-            then throw("Can't vote twice")
-        else WriteSet([
-            DataEntry(getKeyItemStatus(item), if ( commits + 1 == VOTERS ) then REVEAL else COMMIT),
-            DataEntry(getKeyItemAccCommit(item, account), hash),
-            DataEntry(getKeyItemNCommits(item), commits + 1)
-        ])
-    }
+    WriteSet([
+        DataEntry(getKeyItemAccReportData(item, account), data)
+    ])
 }
-@Callable(i)
-func votereveal(item: String, vote: String, salt: String, review: String) = {
-    let ridehash = toBase58String(sha256(toBytes(vote + salt)))
-    let account = toBase58String(i.caller.bytes)
-    let yesmltp = if(vote == FEATURED) then 1 else 0
-    let notmltp = if(vote == DELISTED) then 1 else 0
-    let yescnt = getValueItemVotesYes(item)
-    let notcnt = getValueItemVotesNo(item)
-    let newstatus = if ( yescnt >= QUORUM ) then FEATURED else
-        (if ( notcnt >= QUORUM ) then DELISTED else REVEAL)
-    if (getValueItemAccCommit(item, account) != ridehash)
-        then throw("Hashes don't match")
-    else if (height > getValueItemVotingExpiration(item))
-        then throw("The challenge has expired")
-    else if (getValueItemNCommits(item) < VOTERS)
-        then throw("It's still commit stage")
-    else if (getValueItemStatus(item) != REVEAL && getValueItemStatus(item) != newstatus)
-        then throw("Wrong item status for 'reveal' action")
-    else if (getValueItemAccReveal(item, account) != NONE)
-        then throw("Can't vote twice")
-    else if (vote != FEATURED && vote != DELISTED)
-        then throw("Bad vote result format")
-    else ScriptResult(
-        WriteSet([
-            DataEntry(getKeyItemAccReveal(item, account), vote),
-            DataEntry(getKeyItemVotesYes(item), yescnt + yesmltp),
-            DataEntry(getKeyItemVotesNo(item), notcnt + notmltp),
-            DataEntry(getKeyItemStatus(item), newstatus),
-            DataEntry(getKeyItemAccVoteReviewText(item, account), review)
-        ]),
-        TransferSet([ScriptTransfer(addressFromStringValue(account), VOTEBET, unit)])
-    )
-}
- 
-@Callable(i)
-func finalizevoting(item: String, account: String) = {
-    let yescnt = getValueItemVotesYes(item)
-    let notcnt = getValueItemVotesNo(item)
-    let accvote = getValueItemAccReveal(item, account)
-    let isauthor = account == getValueItemAuthor(item)
-    let finalstatus = if ( yescnt > QUORUM ) then FEATURED else
-        (if ( notcnt > QUORUM ) then DELISTED else NONE)
-    let mltisnotfullmajority = if (yescnt == VOTERS || notcnt == VOTERS) then 0 else 1
-    let nwinners = if ( finalstatus == FEATURED ) then yescnt else
-        (if ( finalstatus == DELISTED ) then notcnt else 0)
-    let nloosers = VOTERS - nwinners
-    let mltacciswinner = if (finalstatus == accvote) then 1 else 0
-    let voteprofit = if (nwinners == 0) then 0 else
-        mltacciswinner*(VOTEBET +
-            mltisnotfullmajority*(nloosers*VOTEBET + LISTINGFEE)/nwinners)
-    let authorreturn = LISTINGFEE*(if(isauthor) then 1 else 0)*
-        (if (mltisnotfullmajority == 1) then 0 else 1)*(if(finalstatus == FEATURED) then 1 else 0)
-    if (height < getValueItemVotingExpiration(item))
-        then throw("The voting hasn't finished yet")
-    else if (getValueItemAccFinal(item, account) == FINISHED)
-        then throw("Account has already claimed")
-    else if (accvote == NONE && !isauthor)
-        then throw("Account hasnot voted, hasnot reveal or isnot author")
-    else if (finalstatus == NONE)
-        then throw("Voting has expired")
-    else ScriptResult(
-        WriteSet([ DataEntry(getKeyItemAccFinal(item, account), FINISHED) ]),
-        TransferSet([ScriptTransfer(addressFromStringValue(account), voteprofit + authorreturn, unit)])
-    )
-}
- 
-@Callable(i)
-func closeexpiredvoting(item: String, account: String) = {
-    let finalstatus = if ( getValueItemVotesYes(item) > QUORUM ) then FEATURED else
-        (if ( getValueItemVotesNo(item) > QUORUM ) then DELISTED else NONE)
-    let accvote = getValueItemAccReveal(item, account)
-    let isauthor = account == getValueItemAuthor(item)
-    let acccomi = getValueItemAccCommit(item, account)
-    let hasrevealstage = getValueItemNCommits(item) == VOTERS
-    let authorreturn = LISTINGFEE*(if(isauthor) then 1 else 0)
-    let votersreturn1 = VOTEBET*(if(hasrevealstage) then 1 else 0)*
-        (if (accvote != NONE) then 1 else 0)
-    let votersreturn2 = 2*VOTEBET*(if(hasrevealstage) then 0 else 1)*
-        (if (acccomi != NONE) then 1 else 0)
-    if (height < getValueItemVotingExpiration(item))
-        then throw("The voting hasn't finished yet")
-    else if (!isauthor && acccomi == NONE)
-        then throw("Wrong account or item")
-    else if (getValueItemAccFinal(item, account) == FINISHED)
-        then throw("Account has already claimed")
-    else if (finalstatus != NONE)
-        then throw("Wrong item status")
-    else ScriptResult(
-                    WriteSet( [ DataEntry(getKeyItemAccFinal(item, account), FINISHED)] ),
-                    TransferSet([ScriptTransfer(addressFromStringValue(account), authorreturn + votersreturn1 + votersreturn2, unit)])
-                )
-}
- 
+
 @Callable(i)
 func donate( item: String, tier: Int, mode: String, review: String ) = {
     let account = toBase58String(i.caller.bytes)
