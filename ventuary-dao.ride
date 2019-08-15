@@ -226,7 +226,7 @@ let POSITIVE = "positive"
 let NEGATIVE = "negative"
  
 let GENESIS = "3P8Fvy1yDwNHvVrabe4ek5b9dAwxFjDKV7R"
-let ADMIN = "3MwMR1ZFfy712trHVLisizYmvRQwsg8z9Bn"
+let ADMIN = "3P9NDxt9Y6ePfM9hkQysgSvbHJvihr56Z18"
  
 # (GLOBALS) TCR implementation with commit-reveal scheme
 let VOTERS = 3
