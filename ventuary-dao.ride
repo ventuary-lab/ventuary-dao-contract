@@ -98,6 +98,10 @@ func getKeyItemAccReviewsCnt(item: String, account: String) = {
 func getKeyItemAccReview(item: String, account: String) = {
     "review_" + item + "_" + account
 }
+func getKeyTransferLink(hash: String) = {
+    "transfer_link_" + hash
+}
+
 func getKeyItemAccReviewText(item: String, account: String, cnt: String) = {
     getKeyItemAccReview(item, account) + "_text_id:" + cnt
 }
@@ -207,7 +211,10 @@ func getValueItemBuyoutAmount(item: String) = {
 func getValueItemAccWinnings(item: String, account: String) = {
     getNumberByKey(getKeyItemAccWinnings(item, account))
 }
- 
+func getTransferLink(hash: String) = {
+    getStrByKey(getKeyTransferLink(hash))
+}
+
 let WHITELISTED = "registered"
 let INVITED = "invited"
 let WHALE = "whale"
@@ -232,11 +239,12 @@ let ADMIN = "3P9NDxt9Y6ePfM9hkQysgSvbHJvihr56Z18"
 let VOTERS = 3
 let QUORUM = 2
 let TIERS = [3*100000000, 10*100000000, 100*100000000, 300*100000000, 1000*100000000]
-let LISTINGFEE = 3*100000000
+let LISTINGFEE = 1*100000000
 let VOTEBET = 1*100000000
  
 let MULTIPLIER = 150
- 
+let SplitDataSymbol = "+"
+
 @Callable(i)
 func inviteuser(newaccount: String, data: String) = {
     let account = toBase58String(i.caller.bytes)
@@ -254,6 +262,7 @@ func inviteuser(newaccount: String, data: String) = {
         ])
     }
 }
+
 @Callable(i)
 func signupbylink(hash: String, data: String, type: String) = {
     let account = toBase58String(i.caller.bytes)
@@ -270,6 +279,7 @@ func signupbylink(hash: String, data: String, type: String) = {
         ])
     }
 }
+
 @Callable(i)
 func signup(data: String, type: String) = {
     let account = toBase58String(i.caller.bytes)
@@ -292,6 +302,7 @@ func userupdate(data: String, type: String) = {
         DataEntry(getKeyWhitelistStatus(account), if (type == WHALE) then WHALE else WHITELISTED)
     ])
 }
+
 @Callable(i)
 func projupdate(item: String, data: String) = {
     let account = toBase58String(i.caller.bytes)
@@ -319,6 +330,7 @@ func withdraw(address : String) = {
         TransferSet([ScriptTransfer(addressFromStringValue(address), amount, unit)])
     )
 }
+
 @Callable(i)
 func additem(item: String, expVoting: Int, expCrowd: Int, expWhale: Int, data: String) = {
     let account = toBase58String(i.caller.bytes)
@@ -454,4 +466,36 @@ func claimwinnings( item: String, account: String ) = {
         DataEntry(getKeyItemStatus(item), if (authorprofit > 0) then CASHOUT else status),
         DataEntry(getKeyItemAccFinal(item, account), CLAIMED)
     ])
+}
+
+@Callable(i)
+func transfer(account: String) = {
+    let pmt = extract(i.payment)
+    if (isDefined(pmt.assetId))
+        then throw("can use waves only at the moment")
+    else TransferSet([ScriptTransfer(addressFromStringValue(account), pmt.amount, unit)])
+}
+
+
+@Callable(i)
+func createTransferLink(amount : Int) = {
+    let pmt = extract(i.payment)
+    let hash = toBase58String(keccak256(toBytes(pmt.amount) + i.caller.bytes + toBytes(height)))
+    if (isDefined(pmt.assetId))
+        then throw("can use waves only at the moment")
+    else WriteSet([DataEntry(getKeyTransferLink(hash), toString(pmt.amount) + SplitDataSymbol + toString(i.caller))])
+}
+
+@Callable(i)
+func transferByLink(hash: String) = {
+    let pmt = extract(i.payment)
+    let link = getTransferLink(hash).split(SplitDataSymbol)
+    let amount = parseIntValue(link[0])
+    let account = addressFromStringValue(link[1])
+
+    if (isDefined(pmt.assetId))
+        then throw("can use waves only at the moment")
+    else if(amount != pmt.amount)
+        then throw("invalid amount")
+    else TransferSet([ScriptTransfer(account, pmt.amount, unit)])
 }
