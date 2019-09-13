@@ -421,13 +421,17 @@ func whale( item: String, review: String ) = {
         else if (pmt.amount < (getValueItemFundPositive(item)*MULTIPLIER)/100)
             then throw("Investement must be more than "
             + toString(MULTIPLIER) + "% of supportes funds")
-        else WriteSet([
-            DataEntry(getKeyItemStatus(item), BUYOUT),
-            DataEntry(getKeyItemAccWhaleReviewText(item, account), review),
-            DataEntry(getKeyBalance(getValueItemAuthor(item)),
-                getValueBalance(getValueItemAuthor(item)) + getValueItemFundPositive(item)),
-            DataEntry(getKeyItemBuyoutAmount(item), pmt.amount)
-        ])
+        else {
+                let bayoutAmount = (getValueItemFundPositive(item)*MULTIPLIER)/100
+                let donateAmount =  pmt.amount - bayoutAmount
+                WriteSet([
+                    DataEntry(getKeyItemStatus(item), BUYOUT),
+                    DataEntry(getKeyItemAccWhaleReviewText(item, account), review),
+                    DataEntry(getKeyBalance(getValueItemAuthor(item)),
+                        getValueBalance(getValueItemAuthor(item)) + getValueItemFundPositive(item) + donateAmount),
+                    DataEntry(getKeyItemBuyoutAmount(item), bayoutAmount)
+            ])
+        }
     }
 }
  
@@ -474,25 +478,4 @@ func transfer(account: String) = {
     if (isDefined(pmt.assetId))
         then throw("can use waves only at the moment")
     else TransferSet([ScriptTransfer(addressFromStringValue(account), pmt.amount, unit)])
-}
-
-
-@Callable(i)
-func createTransferLink(amount : Int) = {
-    let hash = toBase58String(keccak256(toBytes(amount) + i.caller.bytes + toBytes(height)))
-    WriteSet([DataEntry(getKeyTransferLink(hash), toString(amount) + SplitDataSymbol + toString(i.caller))])
-}
-
-@Callable(i)
-func transferByLink(hash: String) = {
-    let pmt = extract(i.payment)
-    let link = getTransferLink(hash).split(SplitDataSymbol)
-    let amount = parseIntValue(link[0])
-    let account = addressFromStringValue(link[1])
-
-    if (isDefined(pmt.assetId))
-        then throw("can use waves only at the moment")
-    else if(amount != pmt.amount)
-        then throw("invalid amount")
-    else TransferSet([ScriptTransfer(account, pmt.amount, unit)])
 }
