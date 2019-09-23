@@ -234,6 +234,7 @@ let NEGATIVE = "negative"
  
 let GENESIS = "3P8Fvy1yDwNHvVrabe4ek5b9dAwxFjDKV7R"
 let ADMIN = "3P9NDxt9Y6ePfM9hkQysgSvbHJvihr56Z18"
+let LABS = "3P3MUCvJjviJaxMUe743LVez3qThbL7U8uP"
  
 # (GLOBALS) TCR implementation with commit-reveal scheme
 let VOTERS = 3
@@ -365,6 +366,30 @@ func reportProject(item: String, data: String) = {
 }
 
 @Callable(i)
+func labsdonate(item: String, review: String) = {
+    let account = toBase58String(i.caller.bytes)
+    let pmt = extract(i.payment)
+    if (isDefined(pmt.assetId)) 
+        then throw("can use waves only at the moment")
+    else if (account != LABS)
+        then throw("labs donation is allowed only for waves labs")
+    else {
+        let cnt = getValueItemAccReviewsCnt(item, account) + 1
+        let newpositivefund = getValueItemFundPositive(item) + pmt.amount
+        
+        WriteSet([
+            DataEntry(getKeyItemAccReviewsCnt(item, account), cnt),
+            DataEntry(getKeyItemAccFundPositive(item, account),
+                getValueItemAccFundPositive(item, account) + pmt.amount ),
+            DataEntry(getKeyItemFundPositive(item), newpositivefund),
+            DataEntry(getKeyItemAccReviewText(item, account, toString(cnt)), review),
+            DataEntry(getKeyItemAccReviewMode(item, account, toString(cnt)), POSITIVE),
+            DataEntry(getKeyItemAccReviewTier(item, account, toString(cnt)), 5)
+        ])
+    }
+}
+
+@Callable(i)
 func donate( item: String, tier: Int, mode: String, review: String ) = {
     let account = toBase58String(i.caller.bytes)
     let pmt = extract(i.payment)
@@ -408,30 +433,28 @@ func donate( item: String, tier: Int, mode: String, review: String ) = {
 func whale( item: String, review: String ) = {
     let account = toBase58String(i.caller.bytes)
     let pmt = extract(i.payment)
-    if (isDefined(pmt.assetId)) then throw("can use waves only at the moment")
+    if (isDefined(pmt.assetId)) 
+        then throw("can use waves only at the moment")
+    else if (account != LABS)
+        then throw("labs donation is allowed only for waves labs")
+    else if (getValueItemStatus(item) != FEATURED)
+        then throw("The project hasn't accepted by community")
+    else if (height < getValueItemCrowdExpiration(item))
+        then throw("The time for crowdfunding has not expired yet")
+    else if (height > getValueItemWhaleExpiration(item))
+        then throw("The time for grant has expired")
+    else if (getValueItemStatus(item) == BUYOUT)
+        then throw("Investement has already done")
+    else if (pmt.amount != (getValueItemFundPositive(item)*MULTIPLIER)/100)
+        then throw("Investement must be more than " + toString(MULTIPLIER) + "% of supportes funds")
     else {
-        if (getValueItemStatus(item) != FEATURED)
-            then throw("The project hasn't accepted by community")
-        else if (height < getValueItemCrowdExpiration(item))
-            then throw("The time for crowdfunding has not expired yet")
-        else if (height > getValueItemWhaleExpiration(item))
-            then throw("The time for grant has expired")
-        else if (getValueItemStatus(item) == BUYOUT)
-            then throw("Investement has already done")
-        else if (pmt.amount < (getValueItemFundPositive(item)*MULTIPLIER)/100)
-            then throw("Investement must be more than "
-            + toString(MULTIPLIER) + "% of supportes funds")
-        else {
-                let bayoutAmount = (getValueItemFundPositive(item)*MULTIPLIER)/100
-                let donateAmount =  pmt.amount - bayoutAmount
-                WriteSet([
-                    DataEntry(getKeyItemStatus(item), BUYOUT),
-                    DataEntry(getKeyItemAccWhaleReviewText(item, account), review),
-                    DataEntry(getKeyBalance(getValueItemAuthor(item)),
-                        getValueBalance(getValueItemAuthor(item)) + getValueItemFundPositive(item) + donateAmount),
-                    DataEntry(getKeyItemBuyoutAmount(item), bayoutAmount)
-            ])
-        }
+        WriteSet([
+            DataEntry(getKeyItemStatus(item), BUYOUT),
+            DataEntry(getKeyItemAccWhaleReviewText(item, account), review),
+            DataEntry(getKeyBalance(getValueItemAuthor(item)),
+                        getValueBalance(getValueItemAuthor(item)) + getValueItemFundPositive(item)),
+            DataEntry(getKeyItemBuyoutAmount(item), pmt.amount)
+        ])
     }
 }
  
@@ -440,7 +463,7 @@ func claimwinnings( item: String, account: String ) = {
     let status = getValueItemStatus(item)
     let isbayout = if (status == BUYOUT) then 1 else 0
     let iscrowdf = if (status != BUYOUT) then 1 else 0
-    let positivefund = getValueItemFundPositive(item)
+    let positivefund = getValueItemFundPositive(item) - getValueItemAccFundPositive(item, LABS)
     let negativefund = getValueItemFundNegative(item)
     let share = isbayout*(getValueItemAccFundPositive(item, account)*100)/
             (if (positivefund <= 0) then 1 else positivefund) +
