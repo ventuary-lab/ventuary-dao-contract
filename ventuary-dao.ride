@@ -430,7 +430,7 @@ func donate( item: String, tier: Int, mode: String, review: String ) = {
 }
  
 @Callable(i)
-func whale( item: String, review: String ) = {
+func whale( item: String) = {
     let account = toBase58String(i.caller.bytes)
     let pmt = extract(i.payment)
     if (isDefined(pmt.assetId)) 
@@ -450,7 +450,6 @@ func whale( item: String, review: String ) = {
     else {
         WriteSet([
             DataEntry(getKeyItemStatus(item), BUYOUT),
-            DataEntry(getKeyItemAccWhaleReviewText(item, account), review),
             DataEntry(getKeyBalance(getValueItemAuthor(item)),
                         getValueBalance(getValueItemAuthor(item)) + getValueItemFundPositive(item)),
             DataEntry(getKeyItemBuyoutAmount(item), pmt.amount)
