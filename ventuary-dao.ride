@@ -476,6 +476,8 @@ func claimwinnings( item: String, account: String ) = {
         positivefund*(if (status != BUYOUT) then 1 else 0)
     if (status == DELISTED)
         then throw("The project hasn't accepted by community")
+    else if(account == LABS)
+        then throw("account error")
     else if (status == CASHOUT)
         then throw("Status is cashout")
     else if (getValueItemAccFinal(item, account) == CLAIMED)
