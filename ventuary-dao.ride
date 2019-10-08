@@ -123,6 +123,12 @@ func getKeyItemBuyoutAmount(item: String) = {
 func getKeyItemAccWinnings(item: String, account: String) = {
     "winnings_" + item + "_" + account
 }
+func getKeyFreeInviteCount() = {
+    "free_invite_count"
+}
+func getKeyFreeInviteBlock() = {
+    "free_invite_block"
+}
  
 func getValueWhitelistRef(account: String) = {
     getStrByKey(getKeyWhitelistRef(account))
@@ -211,10 +217,6 @@ func getValueItemBuyoutAmount(item: String) = {
 func getValueItemAccWinnings(item: String, account: String) = {
     getNumberByKey(getKeyItemAccWinnings(item, account))
 }
-func getTransferLink(hash: String) = {
-    getStrByKey(getKeyTransferLink(hash))
-}
-
 let WHITELISTED = "registered"
 let INVITED = "invited"
 let WHALE = "whale"
@@ -235,7 +237,7 @@ let NEGATIVE = "negative"
 let GENESIS = "3P8Fvy1yDwNHvVrabe4ek5b9dAwxFjDKV7R"
 let ADMIN = "3P9NDxt9Y6ePfM9hkQysgSvbHJvihr56Z18"
 let LABS = "3P3MUCvJjviJaxMUe743LVez3qThbL7U8uP"
- 
+
 # (GLOBALS) TCR implementation with commit-reveal scheme
 let VOTERS = 3
 let QUORUM = 2
@@ -243,8 +245,13 @@ let TIERS = [3*100000000, 10*100000000, 100*100000000, 300*100000000, 1000*10000
 let LISTINGFEE = 1*100000000
 let VOTEBET = 1*100000000
  
+let BLOCKSINDAY = 1440
 let MULTIPLIER = 150
-let SplitDataSymbol = "+"
+let MAXFREEINVITE = 100
+let INVITEFEE = 500000
+
+let freeInviteCount = getNumberByKey(getKeyFreeInviteCount())
+let freeInviteBlock = getNumberByKey(getKeyFreeInviteBlock())
 
 @Callable(i)
 func inviteuser(newaccount: String, data: String) = {
@@ -271,13 +278,19 @@ func signupbylink(hash: String, data: String, type: String) = {
     if (status != INVITED)
         then throw("Referral invite needed. Current status: " + status + ", key:" + getKeyWhitelistStatus(hash) + ", account:" + hash)
     else {
-        WriteSet([
-            DataEntry(getKeyWhitelistBio(account), data),
-            DataEntry(getKeyWhitelistBlock(account), height),
-            DataEntry(getKeyWhitelistStatus(account), if (type == WHALE) then WHALE else WHITELISTED),
-            DataEntry(getKeyWhitelistStatus(hash), SPENDINVITE),
-            DataEntry(getKeyWhitelistRef(account), getValueWhitelistRef(hash))
-        ])
+        ScriptResult(
+            WriteSet([
+                DataEntry(getKeyWhitelistBio(account), data),
+                DataEntry(getKeyWhitelistBlock(account), height),
+                DataEntry(getKeyWhitelistStatus(account), if (type == WHALE) then WHALE else WHITELISTED),
+                DataEntry(getKeyWhitelistStatus(hash), SPENDINVITE),
+                DataEntry(getKeyWhitelistRef(account), getValueWhitelistRef(hash)),
+                DataEntry(getKeyFreeInviteBlock(), if(height > freeInviteBlock) then height + BLOCKSINDAY else freeInviteBlock),
+                DataEntry(getKeyFreeInviteCount(), if(height > freeInviteBlock) then MAXFREEINVITE else freeInviteCount - 1)
+            ]),
+            TransferSet([ScriptTransfer(addressFromStringValue(account), 
+                if(wavesBalance(addressFromStringValue(account)) == 0 && freeInviteCount > 0) then INVITEFEE else 0, unit)])
+        )
     }
 }
 
@@ -339,7 +352,8 @@ func withdraw(address : String) = {
 func additem(item: String, expVoting: Int, expCrowd: Int, expWhale: Int, data: String) = {
     let account = toBase58String(i.caller.bytes)
     let pmt = extract(i.payment)
-    if (isDefined(pmt.assetId)) then throw("can use waves only at the moment")
+    if (isDefined(pmt.assetId)) 
+        then throw("can use waves only at the moment")
     else {
         if (pmt.amount != LISTINGFEE)
             then throw("Please pay exact amount for the listing: " + toString(LISTINGFEE) + ", actual payment is: " + toString(pmt.amount))
@@ -347,16 +361,17 @@ func additem(item: String, expVoting: Int, expCrowd: Int, expWhale: Int, data: S
             then throw("Incorrect time parameters")
         else if (getValueItemAuthor(item) != NONE)
             then throw("Item already exist")
-        else WriteSet([
-            DataEntry(getKeyItemAuthor(item), account),
-            DataEntry(getKeyItemBlock(item), height),
-            DataEntry(getKeyItemVotingExpiration(item), height + expVoting),
-            DataEntry(getKeyItemBank(item), LISTINGFEE),
-            DataEntry(getKeyItemStatus(item), FEATURED),
-            DataEntry(getKeyItemData(item), data),
-            DataEntry(getKeyItemCrowdExpiration(item), height + expCrowd),
-            DataEntry(getKeyItemWhaleExpiration(item), height + expWhale)
-        ])
+        else 
+            WriteSet([
+                DataEntry(getKeyItemAuthor(item), account),
+                DataEntry(getKeyItemBlock(item), height),
+                DataEntry(getKeyItemVotingExpiration(item), height + expVoting),
+                DataEntry(getKeyItemBank(item), LISTINGFEE),
+                DataEntry(getKeyItemStatus(item), FEATURED),
+                DataEntry(getKeyItemData(item), data),
+                DataEntry(getKeyItemCrowdExpiration(item), height + expCrowd),
+                DataEntry(getKeyItemWhaleExpiration(item), height + expWhale)
+            ])
     }
 }
 
