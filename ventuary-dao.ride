@@ -298,10 +298,13 @@ func signup(data: String, type: String) = {
 @Callable(i)
 func userupdate(data: String, type: String) = {
     let account = toBase58String(i.caller.bytes)
-    WriteSet([
-        DataEntry(getKeyWhitelistBio(account), data),
-        DataEntry(getKeyWhitelistStatus(account), if (type == WHALE) then WHALE else WHITELISTED)
-    ])
+    if(getKeyWhitelistBio(account) == NONE)
+        then throw("user not signup")
+    else 
+        WriteSet([
+            DataEntry(getKeyWhitelistBio(account), data),
+            DataEntry(getKeyWhitelistStatus(account), if (type == WHALE) then WHALE else WHITELISTED)
+        ])
 }
 
 @Callable(i)
