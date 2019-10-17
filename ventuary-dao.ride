@@ -242,13 +242,12 @@ let LABS = "3P3MUCvJjviJaxMUe743LVez3qThbL7U8uP"
 let VOTERS = 3
 let QUORUM = 2
 let TIERS = [3*100000000, 10*100000000, 100*100000000, 300*100000000, 1000*100000000]
-let LISTINGFEE = 1*100000000
 let VOTEBET = 1*100000000
  
 let BLOCKSINDAY = 1440
 let MULTIPLIER = 150
-let MAXFREEINVITE = 100
-let INVITEFEE = 500000
+let MAXFREEINVITE = 1000
+let INVITEFEE = 900000
 
 let freeInviteCount = getNumberByKey(getKeyFreeInviteCount())
 let freeInviteBlock = getNumberByKey(getKeyFreeInviteBlock())
@@ -260,14 +259,22 @@ func inviteuser(newaccount: String, data: String) = {
     let currstatus = getValueWhitelistStatus(account)
     if (newstatus == WHITELISTED || newstatus == WHALE)
         then throw("User has already been registered")
+    else if(i.fee > INVITEFEE)
+        then throw("fee more max")
     else if (currstatus != WHITELISTED && account != GENESIS && currstatus != WHALE)
         then throw("Your account should be whitelisted. status: " + currstatus)
     else {
-        WriteSet([
-            DataEntry(getKeyWhitelistRef(newaccount), account),
-            DataEntry(getKeyWhitelistBio(newaccount), data),
-            DataEntry(getKeyWhitelistStatus(newaccount), INVITED)
-        ])
+        ScriptResult(
+            WriteSet([
+                DataEntry(getKeyWhitelistRef(newaccount), account),
+                DataEntry(getKeyWhitelistBio(newaccount), data),
+                DataEntry(getKeyWhitelistStatus(newaccount), INVITED),
+                DataEntry(getKeyFreeInviteBlock(), if(height > freeInviteBlock) then height + BLOCKSINDAY else freeInviteBlock),
+                DataEntry(getKeyFreeInviteCount(), if(height > freeInviteBlock) then MAXFREEINVITE else freeInviteCount - 1)
+            ]),
+            TransferSet([ScriptTransfer(addressFromStringValue(account), 
+                if(wavesBalance(addressFromStringValue(account)) == 0 && (freeInviteCount > 0 || height > freeInviteBlock)) then i.fee else 0, unit)])
+        )
     }
 }
 
@@ -277,19 +284,20 @@ func signupbylink(hash: String, data: String, type: String) = {
     let status = getValueWhitelistStatus(hash)
     if (status != INVITED)
         then throw("Referral invite needed. Current status: " + status + ", key:" + getKeyWhitelistStatus(hash) + ", account:" + hash)
+    else if(i.fee > INVITEFEE)
+        then throw("fee more max")
     else {
         ScriptResult(
             WriteSet([
                 DataEntry(getKeyWhitelistBio(account), data),
                 DataEntry(getKeyWhitelistBlock(account), height),
                 DataEntry(getKeyWhitelistStatus(account), if (type == WHALE) then WHALE else WHITELISTED),
-                DataEntry(getKeyWhitelistStatus(hash), SPENDINVITE),
                 DataEntry(getKeyWhitelistRef(account), getValueWhitelistRef(hash)),
                 DataEntry(getKeyFreeInviteBlock(), if(height > freeInviteBlock) then height + BLOCKSINDAY else freeInviteBlock),
                 DataEntry(getKeyFreeInviteCount(), if(height > freeInviteBlock) then MAXFREEINVITE else freeInviteCount - 1)
             ]),
             TransferSet([ScriptTransfer(addressFromStringValue(account), 
-                if(wavesBalance(addressFromStringValue(account)) == 0 && freeInviteCount > 0) then INVITEFEE else 0, unit)])
+                if(wavesBalance(addressFromStringValue(account)) == 0 && (freeInviteCount > 0 || height > freeInviteBlock)) then i.fee else 0, unit)])
         )
     }
 }
@@ -308,24 +316,44 @@ func signup(data: String, type: String) = {
         ])
     }
 }
+
 @Callable(i)
 func userupdate(data: String, type: String) = {
     let account = toBase58String(i.caller.bytes)
     if(getKeyWhitelistBio(account) == NONE)
         then throw("user not signup")
+    else if(i.fee > INVITEFEE)
+        then throw("fee more max")
     else 
-        WriteSet([
-            DataEntry(getKeyWhitelistBio(account), data),
-            DataEntry(getKeyWhitelistStatus(account), if (type == WHALE) then WHALE else WHITELISTED)
-        ])
+        ScriptResult(
+            WriteSet([
+                DataEntry(getKeyWhitelistBio(account), data),
+                DataEntry(getKeyWhitelistStatus(account), if (type == WHALE) then WHALE else WHITELISTED),
+                DataEntry(getKeyFreeInviteBlock(), if(height > freeInviteBlock) then height + BLOCKSINDAY else freeInviteBlock),
+                DataEntry(getKeyFreeInviteCount(), if(height > freeInviteBlock) then MAXFREEINVITE else freeInviteCount - 1)
+            ]),
+            TransferSet([ScriptTransfer(addressFromStringValue(account), 
+                if(wavesBalance(addressFromStringValue(account)) == 0 && (freeInviteCount > 0 || height > freeInviteBlock)) then i.fee else 0, unit)])
+        )
 }
 
 @Callable(i)
 func projupdate(item: String, data: String) = {
     let account = toBase58String(i.caller.bytes)
-    if (getValueItemAuthor(item) != account) then throw("You're not author")
+    if (getValueItemAuthor(item) != account) 
+        then throw("You're not author")
+    else if(i.fee > INVITEFEE)
+        then throw("fee more max")
     else {
-        WriteSet([DataEntry(getKeyItemData(item), data)])
+        ScriptResult(
+            WriteSet([
+                DataEntry(getKeyItemData(item), data),
+                DataEntry(getKeyFreeInviteBlock(), if(height > freeInviteBlock) then height + BLOCKSINDAY else freeInviteBlock),
+                DataEntry(getKeyFreeInviteCount(), if(height > freeInviteBlock) then MAXFREEINVITE else freeInviteCount - 1)
+            ]),
+            TransferSet([ScriptTransfer(addressFromStringValue(account), 
+                if(wavesBalance(addressFromStringValue(account)) == 0 && (freeInviteCount > 0 || height > freeInviteBlock)) then i.fee else 0, unit)])
+        )
     }
 }
  
@@ -354,24 +382,29 @@ func additem(item: String, expVoting: Int, expCrowd: Int, expWhale: Int, data: S
     let pmt = extract(i.payment)
     if (isDefined(pmt.assetId)) 
         then throw("can use waves only at the moment")
+    else if(i.fee > INVITEFEE)
+        then throw("fee more max")
     else {
-        if (pmt.amount != LISTINGFEE)
-            then throw("Please pay exact amount for the listing: " + toString(LISTINGFEE) + ", actual payment is: " + toString(pmt.amount))
-        else if (!(expVoting > 2 && expCrowd > expVoting && expWhale > expCrowd))
+        if (!(expVoting > 2 && expCrowd > expVoting && expWhale > expCrowd))
             then throw("Incorrect time parameters")
         else if (getValueItemAuthor(item) != NONE)
             then throw("Item already exist")
         else 
-            WriteSet([
-                DataEntry(getKeyItemAuthor(item), account),
-                DataEntry(getKeyItemBlock(item), height),
-                DataEntry(getKeyItemVotingExpiration(item), height + expVoting),
-                DataEntry(getKeyItemBank(item), LISTINGFEE),
-                DataEntry(getKeyItemStatus(item), FEATURED),
-                DataEntry(getKeyItemData(item), data),
-                DataEntry(getKeyItemCrowdExpiration(item), height + expCrowd),
-                DataEntry(getKeyItemWhaleExpiration(item), height + expWhale)
-            ])
+            ScriptResult(
+                WriteSet([
+                    DataEntry(getKeyItemAuthor(item), account),
+                    DataEntry(getKeyItemBlock(item), height),
+                    DataEntry(getKeyItemVotingExpiration(item), height + expVoting),
+                    DataEntry(getKeyItemStatus(item), FEATURED),
+                    DataEntry(getKeyItemData(item), data),
+                    DataEntry(getKeyItemCrowdExpiration(item), height + expCrowd),
+                    DataEntry(getKeyItemWhaleExpiration(item), height + expWhale),
+                    DataEntry(getKeyFreeInviteBlock(), if(height > freeInviteBlock) then height + BLOCKSINDAY else freeInviteBlock),
+                    DataEntry(getKeyFreeInviteCount(), if(height > freeInviteBlock) then MAXFREEINVITE else freeInviteCount - 1)
+                ]),
+                TransferSet([ScriptTransfer(addressFromStringValue(account), 
+                    if(wavesBalance(addressFromStringValue(account)) == 0 && (freeInviteCount > 0 || height > freeInviteBlock)) then i.fee else 0, unit)])
+            )
     }
 }
 
