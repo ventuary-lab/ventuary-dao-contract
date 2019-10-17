@@ -248,6 +248,7 @@ let BLOCKSINDAY = 1440
 let MULTIPLIER = 150
 let MAXFREEINVITE = 1000
 let INVITEFEE = 900000
+let ADDITEMFEE = 1000000
 
 let freeInviteCount = getNumberByKey(getKeyFreeInviteCount())
 let freeInviteBlock = getNumberByKey(getKeyFreeInviteBlock())
@@ -259,6 +260,8 @@ func inviteuser(newaccount: String, data: String) = {
     let currstatus = getValueWhitelistStatus(account)
     if (newstatus == WHITELISTED || newstatus == WHALE)
         then throw("User has already been registered")
+    else if(isDefined(i.feeAssetId))
+        then throw("invalid asset")
     else if(i.fee > INVITEFEE)
         then throw("fee more max")
     else if (currstatus != WHITELISTED && account != GENESIS && currstatus != WHALE)
@@ -284,6 +287,8 @@ func signupbylink(hash: String, data: String, type: String) = {
     let status = getValueWhitelistStatus(hash)
     if (status != INVITED)
         then throw("Referral invite needed. Current status: " + status + ", key:" + getKeyWhitelistStatus(hash) + ", account:" + hash)
+    else if(isDefined(i.feeAssetId))
+        then throw("invalid asset")
     else if(i.fee > INVITEFEE)
         then throw("fee more max")
     else {
@@ -323,6 +328,8 @@ func userupdate(data: String, type: String) = {
     let status = getValueWhitelistStatus(account)
     if(status == NONE)
         then throw("user not signup")
+    else if(isDefined(i.feeAssetId))
+        then throw("invalid asset")
     else if(i.fee > INVITEFEE)
         then throw("fee more max")
     else 
@@ -380,9 +387,9 @@ func withdraw(address : String) = {
 @Callable(i)
 func additem(item: String, expVoting: Int, expCrowd: Int, expWhale: Int, data: String) = {
     let account = toBase58String(i.caller.bytes)
-    let pmt = extract(i.payment)
-    if (isDefined(pmt.assetId)) 
-        then throw("can use waves only at the moment")
+
+    if(isDefined(i.feeAssetId))
+        then throw("invalid asset")
     else if(i.fee > INVITEFEE)
         then throw("fee more max")
     else {
